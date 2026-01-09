@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ICWA: The Guardian's Path</title>
+    <style>
+        /* --- VISUAL STYLE: HAND-DRAWN AESTHETIC --- */
+        :root {
+            --paper-color: #fdfbf7;
+            --ink-color: #2b2b2b;
+            --accent-green: #8bc34a;
+            --accent-red: #e57373;
+            --accent-blue: #4fc3f7;
+        }
+
+        body {
+            background-color: var(--paper-color);
+            color: var(--ink-color);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            padding-bottom: 80px; /* Extra padding so content isn't hidden behind the fixed button */
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        .sketch-box {
+            background: white;
+            border: 2px solid var(--ink-color);
+            border-radius: 2px 255px 3px 25px / 255px 6px 225px 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 2px 3px 0px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* --- BUTTONS --- */
+        button {
+            background: white;
+            border: 2px solid var(--ink-color);
+            border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 1rem;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 5px;
+            box-shadow: 2px 2px 0px var(--ink-color);
+            max-width: 100%;
+        }
+
+        button:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-green { border-color: var(--accent-green); color: #2e7d32; }
+        .btn-red { border-color: var(--accent-red); color: #c62828; }
+        .btn-blue { border-color: var(--accent-blue); color: #0277bd; }
+
+        /* --- FIXED PDF GUIDE BUTTON --- */
+        .fixed-guide-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #fff;
+            border: 3px solid var(--ink-color);
+            border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+            padding: 15px 20px;
+            text-decoration: none;
+            color: var(--ink-color);
+            font-weight: bold;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+            z-index: 1000; /* Ensures it stays on top of everything */
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.2s;
+        }
+
+        .fixed-guide-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .fixed-guide-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+        }
+
+        /* --- FEEDBACK BOXES --- */
+        .feedback-box {
+            display: none; /* Hidden by default */
+            background-color: #f0f0f0;
+            margin-top: 15px;
+            border: 2px dashed var(--ink-color);
+        }
+        
+        .feedback-correct { border-color: var(--accent-green); background-color: #f1f8e9; }
+        .feedback-incorrect { border-color: var(--accent-red); background-color: #ffebee; }
+
+        /* --- SCREENS --- */
+        .screen { display: none; }
+        .active-screen { display: block; animation: fadeIn 0.5s; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- MAP SCREEN --- */
+        .map-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            text-align: center;
+        }
+        
+        .map-location {
+            padding: 20px;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .map-location:hover {
+            transform: scale(1.02);
+        }
+        
+        /* --- BADGES --- */
+        .sticker-drawer {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            border-top: 2px solid var(--ink-color);
+            padding-top: 20px;
+            justify-content: center;
+        }
+        .sticker {
+            width: 50px;
+            height: 50px;
+            border: 2px solid var(--ink-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background: #e0e0e0;
+            color: #999;
+            transition: all 0.5s;
+        }
+        .unlocked { 
+            background: #fffbe0; 
+            color: var(--ink-color);
+            transform: rotate(-10deg); 
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            border-color: #fbc02d;
+        }
+
+        /* --- INTRO PULSE --- */
+        .pulse-text {
+            animation: pulse 2s infinite;
+            color: #555;
+            font-style: italic;
+            text-align: center;
+            margin-top: 40px;
+            cursor: pointer;
+        }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
+    </style>
+</head>
+<body>
+
+    <a href="ICWA 2025 Guidebook Version 1.pdf" target="_blank" class="fixed-guide-btn">
+        📖 Read Guide
+    </a>
+
+    <div id="screen-intro" class="screen active-screen">
+        <div class="sketch-box" style="text-align: center; padding: 40px 20px;">
+            <h1>ICWA Guardian</h1>
+            <p>A Guide to Understanding the Indian Child Welfare Act in Montana</p>
+            <hr style="border: 1px solid black; width: 50%;">
+            <p><i>"Considering the impact of this, take a moment for reflection."</i></p>
+            <div style="font-size: 3rem; margin: 20px;">⛰️</div>
+            
+            <div class="pulse-text" onclick="showScreen('screen-map')">
+                ( Tap anywhere to Begin )
+            </div>
+        </div>
+        <p style="font-size: 0.8rem; text-align: center;">Based on HB317(2023) & SB147(2025)</p>
+    </div>
+
+    <div id="screen-map" class="screen">
+        <h2>Montana Information Center</h2>
+        <p>Visit all locations to earn your badges.</p>
+        
+        <div class="map-container">
+            <div class="sketch-box map-location" onclick="startGame('court')">
+                🏛️<br>Court House
+                <div style="font-size:0.8rem; margin-top:5px;">Check Evidence</div>
+            </div>
+            
+            <div class="sketch-box map-location" onclick="startGame('home')">
+                🏠<br>Family Home
+                <div style="font-size:0.8rem; margin-top:5px;">Placement Preferences</div>
+            </div>
+
+            <div class="sketch-box map-location" onclick="startGame('tribal')">
+                ⛺<br>Tribal Gov
+                <div style="font-size:0.8rem; margin-top:5px;">Sovereignty & Membership</div>
+            </div>
+        </div>
+
+        <div class="sticker-drawer">
+            <div id="badge-court" class="sticker" title="Evidence Expert">⚖️</div>
+            <div id="badge-home" class="sticker" title="Placement Protector">❤️</div>
+            <div id="badge-tribal" class="sticker" title="Sovereignty Defender">🪶</div>
+        </div>
+    </div>
+
+    <div id="screen-court" class="screen">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3>Case File #2025-A</h3>
+            <button onclick="showScreen('screen-map')" style="font-size:0.8rem;">Exit</button>
+        </div>
+        
+        <div class="sketch-box">
+            <p><b>Mission:</b> Identify if "Active Efforts" were made. <br><i>(Referrals alone are not enough!)</i></p>
+        </div>
+
+        <div id="evidence-container"></div>
+        <div id="court-feedback" class="sketch-box feedback-box"></div>
+    </div>
+
+    <div id="screen-home" class="screen">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3>Placement Priority</h3>
+            <button onclick="showScreen('screen-map')" style="font-size:0.8rem;">Exit</button>
+        </div>
+
+        <div class="sketch-box">
+            <p><b>Mission:</b> A child must be placed. Tap the <b>First Priority</b> placement according to ICWA.</p>
+        </div>
+
+        <div id="placement-options"></div>
+        <div id="home-feedback" class="sketch-box feedback-box"></div>
+    </div>
+
+    <div id="screen-tribal" class="screen">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3>Tribal Sovereignty</h3>
+            <button onclick="showScreen('screen-map')" style="font-size:0.8rem;">Exit</button>
+        </div>
+
+        <div class="sketch-box">
+            <p><b>Mission:</b> Answer the question correctly to respect Tribal jurisdiction.</p>
+        </div>
+
+        <div class="sketch-box">
+            <p><strong>Question:</strong> A State Court Judge is presiding over a case. There is ambiguity about whether the child is eligible for membership in a Tribe.</p>
+            <p>Who has the sole authority to determine if the child is a member?</p>
+            <hr>
+            <div id="tribal-options">
+                <button onclick="checkTribalAnswer(false, 'State')">The State Judge</button>
+                <button onclick="checkTribalAnswer(false, 'BIA')">The Bureau of Indian Affairs</button>
+                <button onclick="checkTribalAnswer(true, 'Tribe')" class="btn-blue">The Tribe</button>
+            </div>
+        </div>
+        <div id="tribal-feedback" class="sketch-box feedback-box"></div>
+    </div>
+
+    <script>
+        // --- GAME STATE ---
+        const badges = {
+            court: false,
+            home: false,
+            tribal: false
+        };
+
+        // --- DATA ---
+        
+        // Court Scenarios
+        const courtScenarios = [
+            {
+                text: "The caseworker provided the mother with a list of housing phone numbers but offered no other help.",
+                isActiveEffort: false,
+                reason: "Violation: A referral alone does not constitute an active effort if it was the sole action taken."
+            },
+            {
+                text: "The caseworker offered to assist the parent in completing application paperwork for the service.",
+                isActiveEffort: true,
+                reason: "Correct: Helping with paperwork is an explicit example of Active Efforts."
+            },
+            {
+                text: "The department consulted with the child's Tribe before filing for termination of parental rights.",
+                isActiveEffort: true,
+                reason: "Correct: Consultation with the tribe is required before termination petitions."
+            }
+        ];
+
+        // Placement Options (Rank 1 is correct)
+        const placementOptions = [
+            { name: "Indian Foster Home (Non-Relative)", rank: 3 },
+            { name: "The Child's Extended Family", rank: 1 },
+            { name: "Tribal Member (Non-Relative)", rank: 2 },
+            { name: "Non-Indian Approved Institution", rank: 4 }
+        ];
+
+        let courtIndex = 0;
+        let courtScore = 0;
+
+        // --- NAVIGATION ---
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+            document.getElementById(screenId).classList.add('active-screen');
+            updateBadges();
+        }
+
+        function updateBadges() {
+            if(badges.court) document.getElementById('badge-court').classList.add('unlocked');
+            if(badges.home) document.getElementById('badge-home').classList.add('unlocked');
+            if(badges.tribal) document.getElementById('badge-tribal').classList.add('unlocked');
+        }
+
+        function startGame(type) {
+            if (type === 'court') {
+                courtIndex = 0;
+                courtScore = 0;
+                loadCourtScenario();
+                document.getElementById('court-feedback').style.display = 'none';
+                showScreen('screen-court');
+            } else if (type === 'home') {
+                loadPlacementGame();
+                document.getElementById('home-feedback').style.display = 'none';
+                showScreen('screen-home');
+            } else if (type === 'tribal') {
+                document.getElementById('tribal-feedback').style.display = 'none';
+                document.getElementById('tribal-options').style.display = 'block';
+                showScreen('screen-tribal');
+            }
+        }
+
+        // --- COURT LOGIC ---
+        function loadCourtScenario() {
+            if (courtIndex >= courtScenarios.length) {
+                showCourtSummary();
+                return;
+            }
+
+            const data = courtScenarios[courtIndex];
+            const container = document.getElementById('evidence-container');
+            const feedbackBox = document.getElementById('court-feedback');
+            
+            // Hide feedback when loading new question
+            feedbackBox.style.display = 'none';
+
+            container.innerHTML = `
+                <div class="sketch-box evidence-card">
+                    <p><strong>Evidence Item ${courtIndex + 1}:</strong></p>
+                    <p>"${data.text}"</p>
+                    <div style="margin-top:20px; text-align:center;">
+                        <p>Is this an Active Effort?</p>
+                        <button class="btn-green" onclick="evaluateCourt(true)">Yes (👍)</button>
+                        <button class="btn-red" onclick="evaluateCourt(false)">No (🚩)</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function evaluateCourt(userChoseYes) {
+            const data = courtScenarios[courtIndex];
+            const isCorrect = (userChoseYes === data.isActiveEffort);
+            const feedbackBox = document.getElementById('court-feedback');
+            const container = document.getElementById('evidence-container');
+
+            // Disable buttons in the question area
+            const buttons = container.querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+
+            // Show Feedback
+            feedbackBox.style.display = 'block';
+            feedbackBox.className = 'sketch-box feedback-box ' + (isCorrect ? 'feedback-correct' : 'feedback-incorrect');
+            
+            if (isCorrect) {
+                courtScore++;
+                feedbackBox.innerHTML = `
+                    <h3>Correct!</h3>
+                    <p>${data.reason}</p>
+                    <button onclick="nextCourtQuestion()">Next Case Note ➜</button>
+                `;
+            } else {
+                feedbackBox.innerHTML = `
+                    <h3>Incorrect</h3>
+                    <p>${data.reason}</p>
+                    <button onclick="nextCourtQuestion()">Next Case Note ➜</button>
+                `;
+            }
+        }
+
+        function nextCourtQuestion() {
+            courtIndex++;
+            loadCourtScenario();
+        }
+
+        function showCourtSummary() {
+            const container = document.getElementById('evidence-container');
+            const passed = courtScore >= 2;
+            
+            if (passed) badges.court = true;
+
+            container.innerHTML = `
+                <div class="sketch-box" style="text-align:center;">
+                    <h3>Case Closed</h3>
+                    <p>You scored ${courtScore} out of ${courtScenarios.length}</p>
+                    ${passed ? '<p style="color:green; font-weight:bold;">Badge Unlocked!</p>' : '<p>Try again to earn the badge.</p>'}
+                    <button onclick="showScreen('screen-map')">Return to Map</button>
+                </div>
+            `;
+        }
+
+        // --- PLACEMENT LOGIC ---
+        function loadPlacementGame() {
+            const container = document.getElementById('placement-options');
+            let html = "";
+            // Shuffle
+            let shuffled = [...placementOptions].sort(() => Math.random() - 0.5);
+
+            shuffled.forEach(opt => {
+                const safeName = opt.name.replace(/'/g, "\\'");
+                html += `<div class="sketch-box" onclick="checkPlacement(${opt.rank}, '${safeName}')" style="cursor:pointer; text-align:center;">${opt.name}</div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function checkPlacement(rank, name) {
+            const feedbackBox = document.getElementById('home-feedback');
+            feedbackBox.style.display = 'block';
+
+            if (rank === 1) {
+                badges.home = true;
+                feedbackBox.className = 'sketch-box feedback-box feedback-correct';
+                feedbackBox.innerHTML = `
+                    <h3>Correct!</h3>
+                    <p><b>${name}</b> is the first priority under ICWA placement preferences.</p>
+                    <p style="color:green; font-weight:bold;">Badge Unlocked!</p>
+                    <button onclick="showScreen('screen-map')">Return to Map</button>
+                `;
+            } else {
+                feedbackBox.className = 'sketch-box feedback-box feedback-incorrect';
+                feedbackBox.innerHTML = `
+                    <h3>Incorrect</h3>
+                    <p><b>${name}</b> is priority #${rank}.</p>
+                    <p>ICWA requires looking for <b>Extended Family</b> first.</p>
+                    <button onclick="loadPlacementGame()">Try Again</button>
+                `;
+            }
+        }
+
+        // --- TRIBAL GOV LOGIC ---
+        function checkTribalAnswer(isCorrect, choice) {
+            const feedbackBox = document.getElementById('tribal-feedback');
+            const optionsDiv = document.getElementById('tribal-options');
+            
+            feedbackBox.style.display = 'block';
+            optionsDiv.style.display = 'none'; // Hide buttons
+
+            if (isCorrect) {
+                badges.tribal = true;
+                feedbackBox.className = 'sketch-box feedback-box feedback-correct';
+                feedbackBox.innerHTML = `
+                    <h3>Correct!</h3>
+                    <p>The Tribe has the sole authority to determine membership or eligibility for membership.</p>
+                    <p style="color:green; font-weight:bold;">Badge Unlocked!</p>
+                    <button onclick="showScreen('screen-map')">Return to Map</button>
+                `;
+            } else {
+                feedbackBox.className = 'sketch-box feedback-box feedback-incorrect';
+                feedbackBox.innerHTML = `
+                    <h3>Incorrect</h3>
+                    <p>State courts and federal agencies do not determine Tribal membership. Only the Tribe can do that.</p>
+                    <button onclick="startGame('tribal')">Try Again</button>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
