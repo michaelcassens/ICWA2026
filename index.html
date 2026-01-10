@@ -20,7 +20,7 @@
             font-family: 'Courier New', Courier, monospace;
             margin: 0;
             padding: 20px;
-            padding-bottom: 80px; /* Extra padding so content isn't hidden behind the fixed button */
+            padding-bottom: 80px;
             overflow-x: hidden;
             touch-action: manipulation;
         }
@@ -54,6 +54,7 @@
             margin: 5px;
             box-shadow: 2px 2px 0px var(--ink-color);
             max-width: 100%;
+            white-space: normal; /* Allow text wrapping on buttons */
         }
 
         button:active {
@@ -85,25 +86,19 @@
             font-weight: bold;
             font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
             box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
-            z-index: 1000; /* Ensures it stays on top of everything */
+            z-index: 1000;
             display: flex;
             align-items: center;
             gap: 10px;
             transition: transform 0.2s;
         }
 
-        .fixed-guide-btn:hover {
-            transform: scale(1.05);
-        }
-
-        .fixed-guide-btn:active {
-            transform: translate(2px, 2px);
-            box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
-        }
+        .fixed-guide-btn:hover { transform: scale(1.05); }
+        .fixed-guide-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
 
         /* --- FEEDBACK BOXES --- */
         .feedback-box {
-            display: none; /* Hidden by default */
+            display: none;
             background-color: #f0f0f0;
             margin-top: 15px;
             border: 2px dashed var(--ink-color);
@@ -130,10 +125,6 @@
             padding: 20px;
             font-size: 1.2rem;
             cursor: pointer;
-        }
-
-        .map-location:hover {
-            transform: scale(1.02);
         }
         
         /* --- BADGES --- */
@@ -202,22 +193,22 @@
 
     <div id="screen-map" class="screen">
         <h2>Montana Information Center</h2>
-        <p>Visit all locations to earn your badges.</p>
+        <p>Complete all 3 tasks in each location to earn your badges.</p>
         
         <div class="map-container">
             <div class="sketch-box map-location" onclick="startGame('court')">
                 🏛️<br>Court House
-                <div style="font-size:0.8rem; margin-top:5px;">Check Evidence</div>
+                <div style="font-size:0.8rem; margin-top:5px;">Topic: Active Efforts</div>
             </div>
             
             <div class="sketch-box map-location" onclick="startGame('home')">
                 🏠<br>Family Home
-                <div style="font-size:0.8rem; margin-top:5px;">Placement Preferences</div>
+                <div style="font-size:0.8rem; margin-top:5px;">Topic: Placements</div>
             </div>
 
             <div class="sketch-box map-location" onclick="startGame('tribal')">
                 ⛺<br>Tribal Gov
-                <div style="font-size:0.8rem; margin-top:5px;">Sovereignty & Membership</div>
+                <div style="font-size:0.8rem; margin-top:5px;">Topic: Sovereignty</div>
             </div>
         </div>
 
@@ -230,15 +221,13 @@
 
     <div id="screen-court" class="screen">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3>Case File #2025-A</h3>
+            <h3>Active Efforts</h3>
             <button onclick="showScreen('screen-map')" style="font-size:0.8rem;">Exit</button>
         </div>
-        
         <div class="sketch-box">
-            <p><b>Mission:</b> Identify if "Active Efforts" were made. <br><i>(Referrals alone are not enough!)</i></p>
+            <p><b>Mission:</b> Decide if the caseworker's actions count as "Active Efforts" under ICWA. <br><i>(Referrals alone are not enough!)</i></p>
         </div>
-
-        <div id="evidence-container"></div>
+        <div id="court-content"></div>
         <div id="court-feedback" class="sketch-box feedback-box"></div>
     </div>
 
@@ -247,12 +236,10 @@
             <h3>Placement Priority</h3>
             <button onclick="showScreen('screen-map')" style="font-size:0.8rem;">Exit</button>
         </div>
-
         <div class="sketch-box">
-            <p><b>Mission:</b> A child must be placed. Tap the <b>First Priority</b> placement according to ICWA.</p>
+            <p><b>Mission:</b> Select the correct answer regarding Placement Preferences and Bonding.</p>
         </div>
-
-        <div id="placement-options"></div>
+        <div id="home-content"></div>
         <div id="home-feedback" class="sketch-box feedback-box"></div>
     </div>
 
@@ -261,63 +248,99 @@
             <h3>Tribal Sovereignty</h3>
             <button onclick="showScreen('screen-map')" style="font-size:0.8rem;">Exit</button>
         </div>
-
         <div class="sketch-box">
-            <p><b>Mission:</b> Answer the question correctly to respect Tribal jurisdiction.</p>
+            <p><b>Mission:</b> Answer questions about Jurisdiction, Membership, and Expert Witnesses.</p>
         </div>
-
-        <div class="sketch-box">
-            <p><strong>Question:</strong> A State Court Judge is presiding over a case. There is ambiguity about whether the child is eligible for membership in a Tribe.</p>
-            <p>Who has the sole authority to determine if the child is a member?</p>
-            <hr>
-            <div id="tribal-options">
-                <button onclick="checkTribalAnswer(false, 'State')">The State Judge</button>
-                <button onclick="checkTribalAnswer(false, 'BIA')">The Bureau of Indian Affairs</button>
-                <button onclick="checkTribalAnswer(true, 'Tribe')" class="btn-blue">The Tribe</button>
-            </div>
-        </div>
+        <div id="tribal-content"></div>
         <div id="tribal-feedback" class="sketch-box feedback-box"></div>
     </div>
 
     <script>
         // --- GAME STATE ---
-        const badges = {
-            court: false,
-            home: false,
-            tribal: false
-        };
+        const badges = { court: false, home: false, tribal: false };
+        let currentSection = '';
+        let currentIndex = 0;
+        let currentScore = 0;
 
         // --- DATA ---
         
-        // Court Scenarios
-        const courtScenarios = [
+        // 1. COURTROOM SCENARIOS (Active Efforts)
+        const courtData = [
             {
                 text: "The caseworker provided the mother with a list of housing phone numbers but offered no other help.",
-                isActiveEffort: false,
-                reason: "Violation: A referral alone does not constitute an active effort if it was the sole action taken."
+                isGood: false,
+                reason: "<b>Violation:</b> A referral alone does not constitute an active effort if it was the sole action taken."
             },
             {
                 text: "The caseworker offered to assist the parent in completing application paperwork for the service.",
-                isActiveEffort: true,
-                reason: "Correct: Helping with paperwork is an explicit example of Active Efforts."
+                isGood: true,
+                reason: "<b>Correct:</b> Helping with paperwork is an explicit example of Active Efforts."
             },
             {
-                text: "The department consulted with the child's Tribe before filing for termination of parental rights.",
-                isActiveEffort: true,
-                reason: "Correct: Consultation with the tribe is required before termination petitions."
+                text: "The department involved Tribal representatives in the Family Team Meeting.",
+                isGood: true,
+                reason: "<b>Correct:</b> Involving tribal representatives in family team meetings is required."
             }
         ];
 
-        // Placement Options (Rank 1 is correct)
-        const placementOptions = [
-            { name: "Indian Foster Home (Non-Relative)", rank: 3 },
-            { name: "The Child's Extended Family", rank: 1 },
-            { name: "Tribal Member (Non-Relative)", rank: 2 },
-            { name: "Non-Indian Approved Institution", rank: 4 }
+        // 2. PLACEMENT SCENARIOS (Preferences)
+        const homeData = [
+            {
+                question: "Which of these is the FIRST priority for Foster Care placement?",
+                options: [
+                    { text: "Tribally Approved Institution", correct: false },
+                    { text: "Extended Family Member", correct: true },
+                    { text: "Non-Relative Indian Foster Home", correct: false }
+                ],
+                reason: "<b>Correct!</b> Extended family is always the first priority[cite: 395]."
+            },
+            {
+                question: "If Extended Family is unavailable, what is the SECOND priority?",
+                options: [
+                    { text: "Foster home licensed by the Tribe", correct: true },
+                    { text: "State licensed group home", correct: false },
+                    { text: "A non-Indian family friend", correct: false }
+                ],
+                reason: "<b>Correct!</b> A foster home licensed/approved by the Tribe is the second priority[cite: 399]."
+            },
+            {
+                question: "Can a court depart from placement preferences based SOLELY on ordinary bonding with a foster parent?",
+                options: [
+                    { text: "Yes, bonding is the only factor.", correct: false },
+                    { text: "No, bonding cannot be the sole reason.", correct: true }
+                ],
+                reason: "<b>Correct!</b> Bonding developed from time spent in a non-preferred placement cannot be the sole reason to deviate[cite: 324]."
+            }
         ];
 
-        let courtIndex = 0;
-        let courtScore = 0;
+        // 3. TRIBAL GOV SCENARIOS (Sovereignty)
+        const tribalData = [
+            {
+                question: "Who has the sole authority to determine if a child is eligible for Tribal membership?",
+                options: [
+                    { text: "The State Court Judge", correct: false },
+                    { text: "The Tribe", correct: true },
+                    { text: "The Bureau of Indian Affairs", correct: false }
+                ],
+                reason: "<b>Correct!</b> Only the Tribe can determine membership or eligibility[cite: 454]."
+            },
+            {
+                question: "Can a state Child Protection Specialist serve as the 'Qualified Expert Witness' (QEW) in their own case?",
+                options: [
+                    { text: "Yes, if they are senior level.", correct: false },
+                    { text: "No, they are prohibited.", correct: true }
+                ],
+                reason: "<b>Correct!</b> The department specialist cannot serve as the QEW for their own case[cite: 256]."
+            },
+            {
+                question: "If an Indian child lives OFF-reservation, can the case be transferred to Tribal Court?",
+                options: [
+                    { text: "Yes, absent objection by a parent.", correct: true },
+                    { text: "No, only if they live on the reservation.", correct: false }
+                ],
+                reason: "<b>Correct!</b> The court may transfer jurisdiction absent objection by either parent[cite: 457]."
+            }
+        ];
 
         // --- NAVIGATION ---
         function showScreen(screenId) {
@@ -332,165 +355,111 @@
             if(badges.tribal) document.getElementById('badge-tribal').classList.add('unlocked');
         }
 
-        function startGame(type) {
-            if (type === 'court') {
-                courtIndex = 0;
-                courtScore = 0;
-                loadCourtScenario();
-                document.getElementById('court-feedback').style.display = 'none';
-                showScreen('screen-court');
-            } else if (type === 'home') {
-                loadPlacementGame();
-                document.getElementById('home-feedback').style.display = 'none';
-                showScreen('screen-home');
-            } else if (type === 'tribal') {
-                document.getElementById('tribal-feedback').style.display = 'none';
-                document.getElementById('tribal-options').style.display = 'block';
-                showScreen('screen-tribal');
-            }
+        // --- GENERIC GAME LOGIC ---
+        function startGame(section) {
+            currentSection = section;
+            currentIndex = 0;
+            currentScore = 0;
+            
+            // Hide previous feedback
+            const feedback = document.getElementById(`${section}-feedback`);
+            if(feedback) feedback.style.display = 'none';
+
+            loadQuestion(section);
+            showScreen(`screen-${section}`);
         }
 
-        // --- COURT LOGIC ---
-        function loadCourtScenario() {
-            if (courtIndex >= courtScenarios.length) {
-                showCourtSummary();
+        function loadQuestion(section) {
+            let container = document.getElementById(`${section}-content`);
+            let feedback = document.getElementById(`${section}-feedback`);
+            feedback.style.display = 'none';
+            
+            let dataArr = (section === 'court') ? courtData : (section === 'home' ? homeData : tribalData);
+
+            if (currentIndex >= dataArr.length) {
+                showSummary(section, dataArr.length);
                 return;
             }
 
-            const data = courtScenarios[courtIndex];
-            const container = document.getElementById('evidence-container');
-            const feedbackBox = document.getElementById('court-feedback');
-            
-            // Hide feedback when loading new question
-            feedbackBox.style.display = 'none';
+            let item = dataArr[currentIndex];
+            let html = `<div class="sketch-box"><p><strong>Question ${currentIndex + 1}/${dataArr.length}:</strong></p>`;
 
-            container.innerHTML = `
-                <div class="sketch-box evidence-card">
-                    <p><strong>Evidence Item ${courtIndex + 1}:</strong></p>
-                    <p>"${data.text}"</p>
-                    <div style="margin-top:20px; text-align:center;">
-                        <p>Is this an Active Effort?</p>
-                        <button class="btn-green" onclick="evaluateCourt(true)">Yes (👍)</button>
-                        <button class="btn-red" onclick="evaluateCourt(false)">No (🚩)</button>
-                    </div>
-                </div>
-            `;
-        }
-
-        function evaluateCourt(userChoseYes) {
-            const data = courtScenarios[courtIndex];
-            const isCorrect = (userChoseYes === data.isActiveEffort);
-            const feedbackBox = document.getElementById('court-feedback');
-            const container = document.getElementById('evidence-container');
-
-            // Disable buttons in the question area
-            const buttons = container.querySelectorAll('button');
-            buttons.forEach(b => b.disabled = true);
-
-            // Show Feedback
-            feedbackBox.style.display = 'block';
-            feedbackBox.className = 'sketch-box feedback-box ' + (isCorrect ? 'feedback-correct' : 'feedback-incorrect');
-            
-            if (isCorrect) {
-                courtScore++;
-                feedbackBox.innerHTML = `
-                    <h3>Correct!</h3>
-                    <p>${data.reason}</p>
-                    <button onclick="nextCourtQuestion()">Next Case Note ➜</button>
-                `;
+            if (section === 'court') {
+                // Yes/No logic for Court
+                html += `<p>"${item.text}"</p>
+                         <div style="margin-top:20px; text-align:center;">
+                            <p>Is this an Active Effort?</p>
+                            <button class="btn-green" onclick="handleAnswer('${section}', true)">Yes (👍)</button>
+                            <button class="btn-red" onclick="handleAnswer('${section}', false)">No (🚩)</button>
+                         </div></div>`;
             } else {
-                feedbackBox.innerHTML = `
-                    <h3>Incorrect</h3>
-                    <p>${data.reason}</p>
-                    <button onclick="nextCourtQuestion()">Next Case Note ➜</button>
-                `;
+                // Multiple Choice logic for Home/Tribal
+                html += `<p>${item.question}</p><div style="margin-top:20px; text-align:center;">`;
+                // Shuffle options
+                let opts = [...item.options].sort(() => Math.random() - 0.5);
+                opts.forEach(opt => {
+                    // escape quotes for function call
+                    let safeText = opt.text.replace(/'/g, "\\'"); 
+                    html += `<button onclick="handleAnswer('${section}', ${opt.correct})">${opt.text}</button>`;
+                });
+                html += `</div></div>`;
             }
-        }
-
-        function nextCourtQuestion() {
-            courtIndex++;
-            loadCourtScenario();
-        }
-
-        function showCourtSummary() {
-            const container = document.getElementById('evidence-container');
-            const passed = courtScore >= 2;
             
-            if (passed) badges.court = true;
-
-            container.innerHTML = `
-                <div class="sketch-box" style="text-align:center;">
-                    <h3>Case Closed</h3>
-                    <p>You scored ${courtScore} out of ${courtScenarios.length}</p>
-                    ${passed ? '<p style="color:green; font-weight:bold;">Badge Unlocked!</p>' : '<p>Try again to earn the badge.</p>'}
-                    <button onclick="showScreen('screen-map')">Return to Map</button>
-                </div>
-            `;
-        }
-
-        // --- PLACEMENT LOGIC ---
-        function loadPlacementGame() {
-            const container = document.getElementById('placement-options');
-            let html = "";
-            // Shuffle
-            let shuffled = [...placementOptions].sort(() => Math.random() - 0.5);
-
-            shuffled.forEach(opt => {
-                const safeName = opt.name.replace(/'/g, "\\'");
-                html += `<div class="sketch-box" onclick="checkPlacement(${opt.rank}, '${safeName}')" style="cursor:pointer; text-align:center;">${opt.name}</div>`;
-            });
             container.innerHTML = html;
         }
 
-        function checkPlacement(rank, name) {
-            const feedbackBox = document.getElementById('home-feedback');
-            feedbackBox.style.display = 'block';
+        function handleAnswer(section, userValue) {
+            let dataArr = (section === 'court') ? courtData : (section === 'home' ? homeData : tribalData);
+            let item = dataArr[currentIndex];
+            let isCorrect = false;
 
-            if (rank === 1) {
-                badges.home = true;
-                feedbackBox.className = 'sketch-box feedback-box feedback-correct';
-                feedbackBox.innerHTML = `
-                    <h3>Correct!</h3>
-                    <p><b>${name}</b> is the first priority under ICWA placement preferences.</p>
-                    <p style="color:green; font-weight:bold;">Badge Unlocked!</p>
-                    <button onclick="showScreen('screen-map')">Return to Map</button>
-                `;
+            if (section === 'court') {
+                isCorrect = (userValue === item.isGood);
             } else {
-                feedbackBox.className = 'sketch-box feedback-box feedback-incorrect';
-                feedbackBox.innerHTML = `
-                    <h3>Incorrect</h3>
-                    <p><b>${name}</b> is priority #${rank}.</p>
-                    <p>ICWA requires looking for <b>Extended Family</b> first.</p>
-                    <button onclick="loadPlacementGame()">Try Again</button>
-                `;
+                isCorrect = userValue; // for multiple choice, userValue is boolean true/false passed from button
             }
+
+            if (isCorrect) currentScore++;
+
+            // Show Feedback
+            let feedback = document.getElementById(`${section}-feedback`);
+            feedback.style.display = 'block';
+            feedback.className = 'sketch-box feedback-box ' + (isCorrect ? 'feedback-correct' : 'feedback-incorrect');
+            
+            let reasonText = item.reason; 
+            // Fallback for home/tribal if reason isn't in main object
+            if(!reasonText) reasonText = isCorrect ? "Correct!" : "Incorrect.";
+
+            feedback.innerHTML = `
+                <p>${isCorrect ? '✅' : '❌'} ${reasonText}</p>
+                <button onclick="nextQuestion('${section}')">Next ➜</button>
+            `;
+
+            // Disable buttons
+            let container = document.getElementById(`${section}-content`);
+            container.querySelectorAll('button').forEach(b => b.disabled = true);
         }
 
-        // --- TRIBAL GOV LOGIC ---
-        function checkTribalAnswer(isCorrect, choice) {
-            const feedbackBox = document.getElementById('tribal-feedback');
-            const optionsDiv = document.getElementById('tribal-options');
-            
-            feedbackBox.style.display = 'block';
-            optionsDiv.style.display = 'none'; // Hide buttons
+        function nextQuestion(section) {
+            currentIndex++;
+            loadQuestion(section);
+        }
 
-            if (isCorrect) {
-                badges.tribal = true;
-                feedbackBox.className = 'sketch-box feedback-box feedback-correct';
-                feedbackBox.innerHTML = `
-                    <h3>Correct!</h3>
-                    <p>The Tribe has the sole authority to determine membership or eligibility for membership.</p>
-                    <p style="color:green; font-weight:bold;">Badge Unlocked!</p>
+        function showSummary(section, total) {
+            let container = document.getElementById(`${section}-content`);
+            // Pass if score is majority (e.g. 2/3 or 3/3)
+            let passed = currentScore >= 2; 
+
+            if (passed) badges[section] = true;
+
+            container.innerHTML = `
+                <div class="sketch-box" style="text-align:center;">
+                    <h3>Section Complete</h3>
+                    <p>You scored ${currentScore} out of ${total}</p>
+                    ${passed ? '<p style="color:green; font-weight:bold;">Badge Unlocked!</p>' : '<p>Review the Guide and try again!</p>'}
                     <button onclick="showScreen('screen-map')">Return to Map</button>
-                `;
-            } else {
-                feedbackBox.className = 'sketch-box feedback-box feedback-incorrect';
-                feedbackBox.innerHTML = `
-                    <h3>Incorrect</h3>
-                    <p>State courts and federal agencies do not determine Tribal membership. Only the Tribe can do that.</p>
-                    <button onclick="startGame('tribal')">Try Again</button>
-                `;
-            }
+                </div>
+            `;
         }
     </script>
 </body>
