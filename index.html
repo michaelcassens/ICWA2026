@@ -96,6 +96,29 @@
         .fixed-guide-btn:hover { transform: scale(1.05); }
         .fixed-guide-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
 
+         .fixed-resource-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 260px;
+            background: #fff;
+            border: 3px solid var(--ink-color);
+            border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+            padding: 15px 20px;
+            text-decoration: none;
+            color: var(--ink-color);
+            font-weight: bold;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.2s;
+        }
+
+        .fixed-resource-btn:hover { transform: scale(1.05); }
+        .fixed-resource-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
+
         /* --- FEEDBACK BOXES --- */
         .feedback-box {
             display: none;
@@ -175,6 +198,10 @@
     <a href="ICWA 2025 Guidebook Version 1.pdf" target="_blank" class="fixed-guide-btn">
         📖 Read Guide
     </a>
+
+    Learn more about the 
+    <a href="https://notebooklm.google.com/notebook/f80e477f-df76-4212-a3fa-c76956ee834d" target="_blank" class="fixed-resource-btn">Indian Governance and Policy Institute</a>
+    
 
     <div id="screen-intro" class="screen active-screen">
         <div class="sketch-box" style="text-align: center; padding: 40px 20px;">
